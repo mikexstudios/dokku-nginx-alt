@@ -36,12 +36,14 @@ if [[ -f "$HOME/VHOST" ]]; then
   # instead.)
   APP_NGINX_TEMPLATE="$HOME/$APP/nginx.template"
   if [[ -f $APP_NGINX_TEMPLATE ]]; then
+    echo '-----> Overriding default nginx.conf with detected nginx.template...'
     NGINX_CONF=$APP_NGINX_TEMPLATE
   fi
 
   eval "cat <<< \"$(< $NGINX_CONF)\" > $HOME/$APP/nginx.conf"
 
   pluginhook nginx-pre-reload $APP
+  echo '-----> Reloading nginx...'
   nc -U $HOME/reload-nginx
   echo "$HOSTNAME" > "$HOME/$APP/VHOST"
 fi
