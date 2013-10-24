@@ -16,7 +16,7 @@ if [[ -f "$HOME/VHOST" ]]; then
 
   if [[ -f "$SSL/server.crt" ]] && [[ -f "$SSL/server.key" ]]; then
     SSL_INUSE="$SSL"
-  elif  [[ -f "$WILDCARD_SSL/server.crt" ]] && [[ -f "$WILDCARD_SSL/server.key" ]] && [[ $HOSTNAME = `openssl x509 -in $WILDCARD_SSL/server.crt -noout -subject | tr '/' '\n' | grep CN= | cut -c4-` ]]; then
+  elif [[ -f "$WILDCARD_SSL/server.crt" ]] && [[ -f "$WILDCARD_SSL/server.key" ]] && [[ $HOSTNAME = `openssl x509 -in $WILDCARD_SSL/server.crt -noout -subject | tr '/' '\n' | grep CN= | cut -c4-` ]]; then
     SSL_INUSE="$WILDCARD_SSL"
   fi
 
@@ -28,9 +28,11 @@ if [[ -f "$HOME/VHOST" ]]; then
   if [[ -n "$SSL_INUSE" ]]; then
     # ssl based nginx.conf
     envsubst < nginx.ssl.conf > $HOME/$APP/nginx.conf
+    echo "https://$HOSTNAME" > "$HOME/$APP/URL"
   else
     # default nginx.conf
     envsubst < nginx.conf > $HOME/$APP/nginx.conf
+    echo "http://$HOSTNAME" > "$HOME/$APP/URL"
   fi
 
   pluginhook nginx-pre-reload $APP
