@@ -23,13 +23,15 @@ if [[ -f "$HOME/VHOST" ]]; then
 
   if [[ -n "$SSL_INUSE" ]]; then
     # ssl based nginx.conf
-    eval "cat <<< \"$(< $DIR/nginx.ssl.conf)\" > $HOME/$APP/nginx.conf"
+    NGINX_CONF="$DIR/nginx.ssl.conf"
     echo "https://$HOSTNAME" > "$HOME/$APP/URL"
   else
     # default nginx.conf
-    eval "cat <<< \"$(< $DIR/nginx.conf)\" > $HOME/$APP/nginx.conf"
+    NGINX_CONF="$DIR/nginx.conf"
     echo "http://$HOSTNAME" > "$HOME/$APP/URL"
   fi
+
+  eval "cat <<< \"$(< $NGINX_CONF)\" > $HOME/$APP/nginx.conf"
 
   pluginhook nginx-pre-reload $APP
   nc -U $HOME/reload-nginx
