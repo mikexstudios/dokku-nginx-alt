@@ -1,6 +1,7 @@
 #!/bin/bash
 set -e
 APP="$1"; PORT="$2"
+DIR="$( cd "$( dirname "${BASH_SOURCE[0]}" )" && pwd )"
 WILDCARD_SSL="$HOME/ssl"
 SSL="$HOME/$APP/ssl"
 
@@ -20,18 +21,13 @@ if [[ -f "$HOME/VHOST" ]]; then
     SSL_INUSE="$WILDCARD_SSL"
   fi
 
-  #Export variables so that envsubst can use them for substitution.
-  export APP
-  export PORT
-  export SSL_INUSE
-
   if [[ -n "$SSL_INUSE" ]]; then
     # ssl based nginx.conf
-    envsubst < nginx.ssl.conf > $HOME/$APP/nginx.conf
+    eval "cat <<< \"$(< $DIR/nginx.ssl.conf)\" > $HOME/$APP/nginx.conf"
     echo "https://$HOSTNAME" > "$HOME/$APP/URL"
   else
     # default nginx.conf
-    envsubst < nginx.conf > $HOME/$APP/nginx.conf
+    eval "cat <<< \"$(< $DIR/nginx.conf)\" > $HOME/$APP/nginx.conf"
     echo "http://$HOSTNAME" > "$HOME/$APP/URL"
   fi
 
