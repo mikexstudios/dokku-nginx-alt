@@ -7,26 +7,33 @@ SSL="$HOME/$APP/ssl"
 if [[ -f "$HOME/VHOST" ]]; then
   VHOST=$(< "$HOME/VHOST")
   SUBDOMAIN=${APP/%\.${VHOST}/}
+
   if [[ "$APP" == *.* ]] && [[ "$SUBDOMAIN" == "$APP" ]]; then
-    hostname="${APP/\//-}"
+    HOSTNAME="${APP/\//-}"
   else
-    hostname="${APP/\//-}.$VHOST"
+    HOSTNAME="${APP/\//-}.$VHOST"
   fi
 
   if [[ -f "$SSL/server.crt" ]] && [[ -f "$SSL/server.key" ]]; then
     SSL_INUSE="$SSL"
-  elif  [[ -f "$WILDCARD_SSL/server.crt" ]] && [[ -f "$WILDCARD_SSL/server.key" ]] && [[ $hostname = `openssl x509 -in $WILDCARD_SSL/server.crt -noout -subject | tr '/' '\n' | grep CN= | cut -c4-` ]]; then
+  elif  [[ -f "$WILDCARD_SSL/server.crt" ]] && [[ -f "$WILDCARD_SSL/server.key" ]] && [[ $HOSTNAME = `openssl x509 -in $WILDCARD_SSL/server.crt -noout -subject | tr '/' '\n' | grep CN= | cut -c4-` ]]; then
     SSL_INUSE="$WILDCARD_SSL"
   fi
 
-  # ssl based nginx.conf
+  #Export variables so that envsubst can use them for substitution.
+  export APP
+  export PORT
+  export SSL_INUSE
+
   if [[ -n "$SSL_INUSE" ]]; then
-  envsubst < nginx.ssl.conf > $HOME/$APP/nginx.conf
-else
-# default nginx.conf
-  envsubst < nginx.conf > $HOME/$APP/nginx.conf
+    # ssl based nginx.conf
+    envsubst < nginx.ssl.conf > $HOME/$APP/nginx.conf
+  else
+    # default nginx.conf
+    envsubst < nginx.conf > $HOME/$APP/nginx.conf
   fi
+
   pluginhook nginx-pre-reload $APP
   nc -U $HOME/reload-nginx
-  echo "$hostname" > "$HOME/$APP/VHOST"
+  echo "$HOSTNAME" > "$HOME/$APP/VHOST"
 fi
