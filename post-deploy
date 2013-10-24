@@ -31,6 +31,14 @@ if [[ -f "$HOME/VHOST" ]]; then
     echo "http://$HOSTNAME" > "$HOME/$APP/URL"
   fi
 
+  # Ability to override default configuration files
+  # (If a nginx.template file exists in the $HOME/$APP directory, use that
+  # instead.)
+  APP_NGINX_TEMPLATE="$HOME/$APP/nginx.template"
+  if [[ -f $APP_NGINX_TEMPLATE ]]; then
+    NGINX_CONF=$APP_NGINX_TEMPLATE
+  fi
+
   eval "cat <<< \"$(< $NGINX_CONF)\" > $HOME/$APP/nginx.conf"
 
   pluginhook nginx-pre-reload $APP
