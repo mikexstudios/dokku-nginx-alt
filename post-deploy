@@ -13,6 +13,9 @@ if [[ ! -f $VHOST_PATH ]]; then
   echo "$HOSTNAME" > $VHOST_PATH
 fi
 
+# Remove old nginx.conf if exists
+rm $APP_PATH/nginx.conf
+
 # Put list of VHOST domains in variable. This will be overridden if SSL for
 # some domains are enabled.
 NONSSL_VHOSTS=`cat $VHOST_PATH`
@@ -22,18 +25,27 @@ if [[ -f "$SSL_DIR/server.crt" ]] && [[ -f "$SSL_DIR/server.key" ]]; then
   # Make sure that the domain name of the SSL certificate matches an entry
   # in the VHOST file. (It's okay if the SSL certificate is a wildcard
   # subdomain, as long as there are matches in VHOST.)
-  SSL_INUSE="$SSL_DIR"
   NGINX_CONF="$DIR/nginx.ssl.conf"
+
+  # Ability to override default configuration files
+  # (If a nginx.ssl.template file exists in the $HOME/$APP directory, use that
+  # instead.)
+  APP_NGINX_SSL_TEMPLATE="$HOME/$APP/nginx.ssl.template"
+  if [[ -f $APP_NGINX_SSL_TEMPLATE ]]; then
+    echo '-----> Overriding default SSL nginx.conf with detected nginx.ssl.template...'
+    NGINX_CONF=$APP_NGINX_SSL_TEMPLATE
+  fi
 
   SSL_HOSTNAME=`openssl x509 -in $SSL_DIR/server.crt -noout -subject | tr '/' '\n' | grep CN= | cut -c4-`
   # Prepare the hostname so that it satisfies grep's regex syntax.
   # e.g. mydomain.com -> mydomain\.com
   #      *.mydomain.com -> .*\.mydomain\.com
-  $SSL_HOSTNAME=`echo "$SSL_HOSTNAME" | sed 's|\.|\\.|g' | sed 's/\*/\.\*/g'`
+  SSL_HOSTNAME=`echo "$SSL_HOSTNAME" | sed 's|\.|\\.|g' | sed 's/\*/\.\*/g'`
   SSL_VHOSTS=`grep "$SSL_HOSTNAME" $VHOST_PATH`
   NONSSL_VHOSTS=`grep -v "$SSL_HOSTNAME" $VHOST_PATH` #-v flag means inverse
   while read line; do
     echo "-----> Setting up SSL for $line..."
+    eval "cat <<< \"$(< $NGINX_CONF)\" >> $HOME/$APP/nginx.conf"
   done <<< "$SSL_VHOSTS"
 fi
 
