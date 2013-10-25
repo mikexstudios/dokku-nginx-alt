@@ -45,6 +45,7 @@ if [[ -f "$SSL_DIR/server.crt" ]] && [[ -f "$SSL_DIR/server.key" ]]; then
   NONSSL_VHOSTS=`grep -v "$SSL_HOSTNAME" $VHOST_PATH` #-v flag means inverse
   while read line; do
     echo "-----> Setting up SSL for $line..."
+    SERVER_NAME=$line
     eval "cat <<< \"$(< $NGINX_CONF)\" >> $HOME/$APP/nginx.conf"
   done <<< "$SSL_VHOSTS"
 fi
@@ -68,7 +69,7 @@ fi
 #done < $VHOST_PATH
 SERVER_NAME=`echo $NONSSL_VHOSTS | tr '\n' ' '`
 
-eval "cat <<< \"$(< $NGINX_CONF)\" > $HOME/$APP/nginx.conf"
+eval "cat <<< \"$(< $NGINX_CONF)\" >> $HOME/$APP/nginx.conf"
 
 pluginhook nginx-pre-reload $APP
 echo '-----> Reloading nginx...'
