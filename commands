@@ -1,0 +1,81 @@
+#!/bin/bash
+# domains [appname] - list all domain names
+# domains:help
+# domains:add [appname] DOMAIN
+# domains:clear [appname]
+# domains:remove [appname] DOMAIN
+set -e
+APP_NAME="$2"
+APP_PATH="/home/git/$APP_NAME"
+VHOST_PATH="$APP_PATH/VHOST"
+
+if [[ $1 == 'domains' ]] || [[ $1 == 'domains:*' ]]; then
+  # Check that app name is passed
+  if [[ -z $APP_NAME ]]; then
+    echo "You must specify an app name."
+    exit 1
+  fi
+
+  # Check that app exists
+  if [[ ! -d $APP_PATH ]]; then
+    echo "App $APP_NAME does not exist."
+    exit 1
+  fi
+
+  # Make sure VHOST file exists. Create empty file if not.
+  if [[ ! -f $VHOST_PATH ]]; then
+    echo "-----> Creating new $VHOST_PATH..."
+    touch $VHOST_PATH
+  fi
+fi
+
+case "$1" in
+  # List all domain names for given app
+  domains)
+    echo "=== $APP_NAME Domain Names"
+    cat $VHOST_PATH
+  ;;
+
+  domains:add)
+    if [[ -z $3 ]]; then
+      echo "Usage: $0 $1 $2 DOMAIN"
+      echo "Must specify DOMAIN."
+      exit 1
+    fi
+
+    # TODO: Check if domain already exists
+
+    # Append domain to VHOST
+    cat $3 >> $VHOST_PATH
+    echo "-----> Added $3 to $VHOST_PATH..."
+  ;;
+
+  domains:clear)
+    touch $VHOST_PATH
+  ;;
+
+  domains:remove)
+    if [[ -z $3 ]]; then
+      echo "Usage: $0 $1 $2 DOMAIN"
+      echo "Must specify DOMAIN."
+      exit 1
+    fi
+
+    # Remove domain from VHOST
+    sed -i "/^$3$/d" $VHOST_PATH
+    echo "-----> Removed $3 from $VHOST_PATH..."
+  ;;
+
+  help | domains:help)
+    cat <<EOF
+    Configure VHOST domains.
+      domains <appname>               # list custom domains for app
+      domains:help <appname>          # this help message
+      domains:add <appname> DOMAIN    # add a custom domain to app
+      domains:clear <appname>         # clear all custom domains for app
+      domains:remove <appname> DOMAIN # remove a custom domain from app
+
+EOF
+  ;;
+esac
+cat
