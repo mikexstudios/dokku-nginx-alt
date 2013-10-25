@@ -1,51 +1,39 @@
 #!/bin/bash
 set -e
 APP="$1"; PORT="$2"
-DIR="$( cd "$( dirname "${BASH_SOURCE[0]}" )" && pwd )"
+DIR="$( cd "$( dirname "${BASH_SOURCE[0]}" )" && pwd )" #this directory
+APP_PATH="/home/git/$APP"
+VHOST_PATH="$APP_PATH/VHOST"
 WILDCARD_SSL="$HOME/ssl"
 SSL="$HOME/$APP/ssl"
 
-if [[ -f "$HOME/VHOST" ]]; then
-  VHOST=$(< "$HOME/VHOST")
-  SUBDOMAIN=${APP/%\.${VHOST}/}
-
-  if [[ "$APP" == *.* ]] && [[ "$SUBDOMAIN" == "$APP" ]]; then
-    HOSTNAME="${APP/\//-}"
-  else
-    HOSTNAME="${APP/\//-}.$VHOST"
-  fi
-
-  if [[ -f "$SSL/server.crt" ]] && [[ -f "$SSL/server.key" ]]; then
-    SSL_INUSE="$SSL"
-  elif [[ -f "$WILDCARD_SSL/server.crt" ]] && [[ -f "$WILDCARD_SSL/server.key" ]] \
-    && [[ $HOSTNAME = `openssl x509 -in $WILDCARD_SSL/server.crt -noout -subject | \ 
-    tr '/' '\n' | grep CN= | cut -c4-` ]]; then
-    SSL_INUSE="$WILDCARD_SSL"
-  fi
-
-  if [[ -n "$SSL_INUSE" ]]; then
-    # ssl based nginx.conf
-    NGINX_CONF="$DIR/nginx.ssl.conf"
-    echo "https://$HOSTNAME" > "$HOME/$APP/URL"
-  else
-    # default nginx.conf
-    NGINX_CONF="$DIR/nginx.conf"
-    echo "http://$HOSTNAME" > "$HOME/$APP/URL"
-  fi
-
-  # Ability to override default configuration files
-  # (If a nginx.template file exists in the $HOME/$APP directory, use that
-  # instead.)
-  APP_NGINX_TEMPLATE="$HOME/$APP/nginx.template"
-  if [[ -f $APP_NGINX_TEMPLATE ]]; then
-    echo '-----> Overriding default nginx.conf with detected nginx.template...'
-    NGINX_CONF=$APP_NGINX_TEMPLATE
-  fi
-
-  eval "cat <<< \"$(< $NGINX_CONF)\" > $HOME/$APP/nginx.conf"
-
-  pluginhook nginx-pre-reload $APP
-  echo '-----> Reloading nginx...'
-  nc -U $HOME/reload-nginx
-  echo "$HOSTNAME" > "$HOME/$APP/VHOST"
+# Check if a VHOST exists. If not, default to proxying the server's hostname
+# (which may not always be correct, but worth a try).
+if [[ ! -f $VHOST_PATH ]]; then
+  echo "-----> Creating new $VHOST_PATH with hostname: $HOSTNAME..."
+  echo "$HOSTNAME" > $VHOST_PATH
 fi
+
+# default nginx.conf
+NGINX_CONF="$DIR/nginx.conf"
+
+# Ability to override default configuration files
+# (If a nginx.template file exists in the $HOME/$APP directory, use that
+# instead.)
+APP_NGINX_TEMPLATE="$HOME/$APP/nginx.template"
+if [[ -f $APP_NGINX_TEMPLATE ]]; then
+  echo '-----> Overriding default nginx.conf with detected nginx.template...'
+  NGINX_CONF=$APP_NGINX_TEMPLATE
+fi
+
+# The VHOST file can contain more than one custom domain. We add each to the
+# server_name parameter of nginx.
+#while read line; do
+#done < $VHOST_PATH
+SERVER_NAME=`cat $VHOST_PATH | tr '\n' ' '`
+
+eval "cat <<< \"$(< $NGINX_CONF)\" > $HOME/$APP/nginx.conf"
+
+pluginhook nginx-pre-reload $APP
+echo '-----> Reloading nginx...'
+nc -U $HOME/reload-nginx
