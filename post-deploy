@@ -15,6 +15,10 @@ fi
 
 # Remove old nginx.conf if exists
 rm $APP_PATH/nginx.conf
+# Add once-off configuration options. These should NOT go in the .conf
+# templates because the .conf templates are meant to be appendable for
+# multiple domains.
+echo "upstream $APP { server 127.0.0.1:$PORT; }" > $APP_PATH/nginx.conf
 
 # Put list of VHOST domains in variable. This will be overridden if SSL for
 # some domains are enabled.
@@ -65,8 +69,6 @@ fi
 
 # The VHOST file can contain more than one custom domain. We add each to the
 # server_name parameter of nginx.
-#while read line; do
-#done < $VHOST_PATH
 SERVER_NAME=`echo $NONSSL_VHOSTS | tr '\n' ' '`
 
 eval "cat <<< \"$(< $NGINX_CONF)\" >> $HOME/$APP/nginx.conf"
