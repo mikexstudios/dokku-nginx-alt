@@ -47,8 +47,11 @@ if [[ -f "$SSL_DIR/server.crt" ]] && [[ -f "$SSL_DIR/server.key" ]]; then
   SSL_HOSTNAME=`echo "$SSL_HOSTNAME" | sed 's|\.|\\.|g' | sed 's/\*/\.\*/g'`
   SSL_VHOSTS=`grep "$SSL_HOSTNAME" $VHOST_PATH`
   NONSSL_VHOSTS=`grep -v "$SSL_HOSTNAME" $VHOST_PATH` #-v flag means inverse
+
+  # For each domain that satisfies the SSL certificate, set up nginx under
+  # the SSL template.
   while read line; do
-    echo "-----> Setting up SSL for $line..."
+    echo "-----> Configuring SSL for $line..."
     SERVER_NAME=$line
     eval "cat <<< \"$(< $NGINX_CONF)\" >> $HOME/$APP/nginx.conf"
   done <<< "$SSL_VHOSTS"
@@ -69,6 +72,8 @@ fi
 
 # The VHOST file can contain more than one custom domain. We add each to the
 # server_name parameter of nginx.
+cat $VHOST_PATH | xargs -i \
+  echo "-----> Configuring {}..."
 SERVER_NAME=`echo $NONSSL_VHOSTS | tr '\n' ' '`
 
 eval "cat <<< \"$(< $NGINX_CONF)\" >> $HOME/$APP/nginx.conf"
