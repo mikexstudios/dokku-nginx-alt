@@ -38,7 +38,7 @@ case "$1" in
 
   domains:add)
     if [[ -z $3 ]]; then
-      echo "Usage: $0 $1 $2 DOMAIN"
+      echo "Usage: dokku $1 $2 DOMAIN"
       echo "Must specify DOMAIN."
       exit 1
     fi
@@ -46,17 +46,18 @@ case "$1" in
     # TODO: Check if domain already exists
 
     # Append domain to VHOST
-    cat $3 >> $VHOST_PATH
+    echo "$3" >> $VHOST_PATH
     echo "-----> Added $3 to $VHOST_PATH..."
   ;;
 
   domains:clear)
-    touch $VHOST_PATH
+    echo '' > $VHOST_PATH
+    echo "-----> Cleared domains in $VHOST_PATH..."
   ;;
 
   domains:remove)
     if [[ -z $3 ]]; then
-      echo "Usage: $0 $1 $2 DOMAIN"
+      echo "Usage: dokku $1 $2 DOMAIN"
       echo "Must specify DOMAIN."
       exit 1
     fi
@@ -68,13 +69,12 @@ case "$1" in
 
   help | domains:help)
     cat <<EOF
-    Configure VHOST domains.
+    Configure VHOST domains:
       domains <appname>               # list custom domains for app
       domains:help <appname>          # this help message
       domains:add <appname> DOMAIN    # add a custom domain to app
       domains:clear <appname>         # clear all custom domains for app
       domains:remove <appname> DOMAIN # remove a custom domain from app
-
 EOF
   ;;
 esac
