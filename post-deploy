@@ -3,7 +3,7 @@ set -e
 echo "-----> Deploying nginx..."
 APP="$1"; PORT="$2"
 DIR="$( cd "$( dirname "${BASH_SOURCE[0]}" )" && pwd )" #this directory
-APP_PATH="/home/git/$APP"
+APP_PATH="/home/dokku/$APP"
 VHOST_PATH="$APP_PATH/VHOST"
 SSL_DIR="$HOME/$APP/ssl"
 
