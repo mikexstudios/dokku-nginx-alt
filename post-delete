@@ -1,0 +1,4 @@
+#!/usr/bin/env bash
+# This file is exactly the same as dokku's original nginx-vhosts/post-delete
+set -eo pipefail; [[ $DOKKU_TRACE ]] && set -x
+sudo /etc/init.d/nginx reload > /dev/null
