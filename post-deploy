@@ -105,6 +105,16 @@ echo $NONSSL_VHOSTS | xargs -i \
 # Then trim leading and trailing whitespace (xargs). If VHOST file is blank,
 # xargs reduces any whitespace to a blank string.
 SERVER_NAME=`echo $NONSSL_VHOSTS | tr '\n' ' ' | xargs`
+
+# Set MAIN_HOST (www.example.com) and MAIN_HOST_LEVEL_2 (example.com)
+MAIN_HOST="$(cut -d ' ' -f 1 <<< "$SERVER_NAME")"
+MAIN_HOST_DEPTH=$(grep -o '\.' <<< "$MAIN_HOST" | wc -l | tr -d ' ')
+if [[ $MAIN_HOST_DEPTH -gt 1 ]]; then
+  MAIN_HOST_LVL_2=$(cut -d '.' -f "2-$((MAIN_HOST_DEPTH + 1))" <<< "$MAIN_HOST")
+elif [[ $MAIN_HOST_DEPTH -gt 0 ]]; then
+  MAIN_HOST_LVL_2=$MAIN_HOST
+fi
+
 cat $NGINX_CONF | process_template >> $APP_PATH/nginx.conf
 
 # CRUDE HACK: Since the `URL` file only expects one app url, we take the 
