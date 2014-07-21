@@ -45,7 +45,7 @@ This plugin has been tested on dokku version 0.2.3.
    line.
 
 5. To over-ride the default `nginx.conf` and `nginx.ssl.conf` templates, place 
-   copies renamed as `nginx.template` and `nginx.ssl.template` in your
+   copies renamed as `nginx.tpl` and `nginx.ssl.tpl` in your
    `/home/dokku/$APP` directory. When you re-push your application, you should see
    a message like:
 
