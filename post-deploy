@@ -20,6 +20,9 @@ APP_SSL_PATH="$APP_PATH/tls"
 # domains are enabled. If VHOST does not exist, set to empty string.
 NONSSL_VHOSTS=`cat $VHOST_PATH 2>&- || echo ''`
 
+# Load app config for the template
+source $APP_PATH/ENV
+
 # Remove old nginx.conf if exists
 rm -f $APP_PATH/nginx.conf #need -f to supress error if non-existent file
 
