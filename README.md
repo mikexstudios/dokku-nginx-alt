@@ -8,7 +8,7 @@ between this plugin and the standard built in [dokku-vhosts][3] plugin:
 - Moved configuration file from `post-deploy` into separate template files:
   `nginx.conf` and `nginx.ssl.conf`.
 - Ability to override default .conf files with user's own nginx configuration
-  files placed in `/home/git/$APP`.
+  files placed in `/home/dokku/$APP/`.
 - Ability to deploy an app under multiple custom domains. The `VHOST` file can 
   now contain a list of domains that nginx will serve to.
 - `VHOST` file is decoupled from `post-deploy` in that `post-deploy` no longer
@@ -44,13 +44,13 @@ This plugin has been tested on dokku version 0.2.3.
    (e.g. `/home/dokku/[app name]/VHOST`) and add each domain name on a separate 
    line.
 
-5. To over-ride the default `nginx.conf` and `nginx.ssl.conf` templates, place 
-   copies renamed as `nginx.tpl` and `nginx.ssl.tpl` in your
-   `/home/dokku/$APP` directory. When you re-push your application, you should see
+5. To override the default `nginx.conf` and/or `nginx.ssl.conf` templates, place 
+   copies renamed as `nginx.tpl` and/or `nginx.ssl.tpl` in your
+   `/home/dokku/[app name]/` directory. When you re-push your application, you should see
    a message like:
 
    ```sh
-   -----> Overriding default SSL nginx.conf with detected nginx.template...
+   -----> Overriding default SSL nginx.conf with detected nginx.tpl...
    ```
 
 6. Re-push your app.
