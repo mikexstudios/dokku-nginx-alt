@@ -1,9 +1,17 @@
 dokku-nginx-alt
 ==============
 
-dokku-nginx-alt is a alternative plugin for [dokku][1] that configures [nginx][2]
-as a reverse proxy to deployed dokku app. There are a number of design changes
-between this plugin and the standard built in [dokku-vhosts][3] plugin:
+dokku-nginx-alt is a alternative plugin for [dokku][1]'s built in
+[nginx-vhosts][2]. This plugin supports:
+
+- Multiple custom domains for each app (e.g. myapp.com, www.myapp.com, and
+  production.myapp.com can all be served by the same app). These domains
+  are defined in the `VHOST` file, with each domain name on a new line.
+- Ability to override `nginx.conf`. Simply place `nginx.tpl` or `nginx.ssl.tpl`
+  files into the app's home directory (i.e. `/home/dokku/[app name]/`). Upon
+  push, these templates will be used.
+
+In more detail:
 
 - Moved configuration file from `post-deploy` into separate template files:
   `nginx.conf` and `nginx.ssl.conf`.
@@ -21,8 +29,7 @@ between this plugin and the standard built in [dokku-vhosts][3] plugin:
 - Added helper messages during deploy.
 
 [1]: https://github.com/progrium/dokku
-[2]: http://nginx.org
-[3]: https://github.com/progrium/dokku/tree/master/plugins/nginx-vhosts
+[2]: https://github.com/progrium/dokku/tree/master/plugins/nginx-vhosts
 
 
 Installation and Usage
