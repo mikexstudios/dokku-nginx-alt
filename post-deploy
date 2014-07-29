@@ -2,11 +2,6 @@
 set -eo pipefail; [[ $DOKKU_TRACE ]] && set -x
 
 set -a #export all subsequently defined variables for template access
-# Bash templating snippet from: http://stackoverflow.com/a/2916159/66771 
-# NOTE: Template variables must be exported (done with set -a above) and placed
-# in brackets (like ${...}) for the regex to process it.
-shopt -s expand_aliases
-alias process_template="perl -p -i -e 's/\\$\{([^}]+)\}/defined \$ENV{\$1} ? \$ENV{\$1} : \$&/eg'"
 
 echo "-----> Deploying nginx..."
 APP="$1"; PORT="$2"
@@ -24,9 +19,6 @@ NONSSL_VHOSTS=`cat $VHOST_PATH 2>&- || echo ''`
 # ${MY_VAR}.
 source $APP_PATH/ENV || true
 
-# Remove old nginx.conf if exists
-rm -f $APP_PATH/nginx.conf #need -f to supress error if non-existent file
-
 # Add once-off configuration options.  
 echo '-----> Configuring once-off options...'
 NGINX_ONCE_CONF="$DIR/nginx.once.conf"
@@ -35,7 +27,7 @@ if [[ -e $APP_NGINX_ONCE_TEMPLATE ]]; then
   echo '-----> Overriding default nginx.once.conf with detected nginx.once.tpl'
   NGINX_ONCE_CONF=$APP_NGINX_ONCE_TEMPLATE
 fi
-cat $NGINX_ONCE_CONF | process_template >> $APP_PATH/nginx.conf
+envsubst <"$NGINX_ONCE_CONF" >"$APP_PATH/nginx.conf"
 
 # Check if SSL should be enabled. If there are $DOKKU_ROOT/tls certificates,
 # try to use those. If the app has an tls/ directory, these override the root
@@ -79,7 +71,7 @@ if [[ -e "$SSL_PATH/server.crt" ]] && [[ -e "$SSL_PATH/server.key" ]]; then
     if [[ -z $line ]]; then continue; fi #ignore blank lines
     echo "-----> Configuring SSL for $line..."
     SERVER_NAME=$line
-    cat $NGINX_CONF | process_template >> $APP_PATH/nginx.conf
+    envsubst <"$NGINX_CONF" >>"$APP_PATH/nginx.conf"
 
     # CRUDE HACK: Since the `URL` file only expects one app url, we keep
     # overwriting the `URL` file with the last processed domain. The URL
@@ -87,7 +79,6 @@ if [[ -e "$SSL_PATH/server.crt" ]] && [[ -e "$SSL_PATH/server.key" ]]; then
     echo "https://$line" > "$DOKKU_ROOT/$APP/URL"
   done <<< "$SSL_VHOSTS"
 fi
-
 
 # Now handle non-SSL domains
 NGINX_CONF="$DIR/nginx.conf" # default non-SSL conf file
@@ -109,7 +100,7 @@ echo $NONSSL_VHOSTS | xargs -i \
 # Then trim leading and trailing whitespace (xargs). If VHOST file is blank,
 # xargs reduces any whitespace to a blank string.
 SERVER_NAME=`echo $NONSSL_VHOSTS | tr '\n' ' ' | xargs`
-cat $NGINX_CONF | process_template >> $APP_PATH/nginx.conf
+envsubst <"$NGINX_CONF" >>"$APP_PATH/nginx.conf"
 
 # CRUDE HACK: Since the `URL` file only expects one app url, we take the 
 # first  `$NONSSL_VHOSTS` domain and write it to `URL`.
