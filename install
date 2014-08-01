@@ -5,10 +5,17 @@
 # 2. A `cat` is added to the end so that install output can be piped to user.
 set -eo pipefail; [[ $DOKKU_TRACE ]] && set -x
 
-# latest stable NGINX 1.4.x with websocket support
-add-apt-repository -y ppa:nginx/stable
-apt-get update
-apt-get install -y nginx dnsutils
+NGINX=$( which nginx )
+# nginx -v outputs to stderr. have to redirect to awk it
+[[ -n $NGINX ]] && NGINX_VERSION=$( `which nginx` -v 2>&1 | awk -F 'nginx/' '{ print $2 }' )
+
+# only install nginx if our version is less that 1.4.0. NGINX_VERSION might be undefined. and that's ok
+if [ "$( printf '1.4.0\n${NGINX_VERSION}' | sort -V | tail -1 )" = "1.4.0" ]; then
+    # latest stable NGINX 1.4.x with websocket support
+    add-apt-repository -y ppa:nginx/stable
+    apt-get update
+    apt-get install -y nginx dnsutils
+fi
 
 if ! grep -q dokku-nginx-reload "/etc/sudoers"; then
   touch /etc/sudoers.tmp
