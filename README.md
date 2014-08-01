@@ -37,9 +37,9 @@ Installation and Usage
 
 This plugin has been tested on dokku version 0.2.3.
 
-1. Remove the default `nginx-vhost` plugin:
+1. Remove the default `nginx-vhosts` plugin:
    ```sh
-   rm -rf /var/lib/dokku/plugins/nginx-vhost
+   rm -rf /var/lib/dokku/plugins/nginx-vhosts
    ```
    
 2. Install the plugin by cloning into the dokku plugins directory:
