@@ -6,7 +6,7 @@ set -a #export all subsequently defined variables for template access
 # NOTE: Template variables must be exported (done with set -a above) and placed
 # in brackets (like ${...}) for the regex to process it.
 shopt -s expand_aliases
-alias process_template="perl -p -i -e 's/\\$\{([^}]+)\}/defined \$ENV{\$1} ? \$ENV{\$1} : \$&/eg'"
+alias process_template="perl -p -e 's/\\$\{([^}]+)\}/defined \$ENV{\$1} ? \$ENV{\$1} : \$&/eg'"
 
 echo "-----> Deploying nginx..."
 APP="$1"; PORT="$2"
@@ -102,16 +102,18 @@ if [[ -e $APP_NGINX_TEMPLATE ]]; then
   NGINX_CONF=$APP_NGINX_TEMPLATE
 fi
 
-# The VHOST file can contain more than one custom domain. We add each as a
-# single line to the server_name parameter of nginx instead of creating
-# separate server_name entries for each.
-echo $NONSSL_VHOSTS | xargs -i \
-  echo "-----> Configuring {}..."
-# Combine all of the VHOST names into one line separated by at least a space.
-# Then trim leading and trailing whitespace (xargs). If VHOST file is blank,
-# xargs reduces any whitespace to a blank string.
-SERVER_NAME=`echo $NONSSL_VHOSTS | tr '\n' ' ' | xargs`
-cat $NGINX_CONF | process_template >> $APP_PATH/nginx.conf
+if [[ ! -z "$NONSSL_VHOSTS" ]]; then
+  # The VHOST file can contain more than one custom domain. We add each as a
+  # single line to the server_name parameter of nginx instead of creating
+  # separate server_name entries for each.
+  echo $NONSSL_VHOSTS | xargs -i \
+    echo "-----> Configuring {}..."
+  # Combine all of the VHOST names into one line separated by at least a space.
+  # Then trim leading and trailing whitespace (xargs). If VHOST file is blank,
+  # xargs reduces any whitespace to a blank string.
+  SERVER_NAME=`echo $NONSSL_VHOSTS | tr '\n' ' ' | xargs`
+  cat $NGINX_CONF | process_template >> $APP_PATH/nginx.conf
+fi
 
 # CRUDE HACK: Since the `URL` file only expects one app url, we take the 
 # first  `$NONSSL_VHOSTS` domain and write it to `URL`.
