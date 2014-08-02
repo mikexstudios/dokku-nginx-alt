@@ -12,9 +12,11 @@ echo "-----> Deploying nginx..."
 APP="$1"; PORT="$2"; IMAGE="dokku/${APP}"
 DIR="$( cd "$( dirname "${BASH_SOURCE[0]}" )" && pwd )" #this directory
 APP_PATH="$DOKKU_ROOT/$APP"
-VHOST_PATH="$APP_PATH/VHOST"
 WILDCARD_SSL_PATH="$DOKKU_ROOT/tls"
 APP_SSL_PATH="$APP_PATH/tls"
+
+# use app VHOST if it exists. otherwise use dokku's vhost
+[[ -e $APP_PATH/VHOST ]] && VHOST_PATH="$APP_PATH/VHOST" || VHOST_PATH="$DOKKU_ROOT/VHOST"
 
 # copy templates to TMP_PATH if they exist. then override if in container
 TMP_PATH=$(mktemp -d /tmp/dokku_nginx_alt.XXXXX)
