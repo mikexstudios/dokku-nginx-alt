@@ -2,19 +2,32 @@
 set -eo pipefail; [[ $DOKKU_TRACE ]] && set -x
 
 set -a #export all subsequently defined variables for template access
-# Bash templating snippet from: http://stackoverflow.com/a/2916159/66771 
+# Bash templating snippet from: http://stackoverflow.com/a/2916159/66771
 # NOTE: Template variables must be exported (done with set -a above) and placed
 # in brackets (like ${...}) for the regex to process it.
 shopt -s expand_aliases
 alias process_template="perl -p -i -e 's/\\$\{([^}]+)\}/defined \$ENV{\$1} ? \$ENV{\$1} : \$&/eg'"
 
 echo "-----> Deploying nginx..."
-APP="$1"; PORT="$2"
+APP="$1"; PORT="$2"; IMAGE="dokku/${APP}"
 DIR="$( cd "$( dirname "${BASH_SOURCE[0]}" )" && pwd )" #this directory
 APP_PATH="$DOKKU_ROOT/$APP"
 VHOST_PATH="$APP_PATH/VHOST"
 WILDCARD_SSL_PATH="$DOKKU_ROOT/tls"
 APP_SSL_PATH="$APP_PATH/tls"
+
+# copy templates to TMP_PATH if they exist. then override if in container
+TMP_PATH=$(mktemp -d /tmp/dokku_nginx_alt.XXXXX)
+[[ -f $APP_PATH/nginx.once.tpl ]] && cp $APP_PATH/nginx.once.tpl $TMP_PATH
+[[ -f $APP_PATH/nginx.ssl.tpl ]] && cp $APP_PATH/nginx.ssl.tpl $TMP_PATH
+[[ -f $APP_PATH/nginx.tpl ]] && cp $APP_PATH/nginx.tpl $TMP_PATH
+
+# attempt to copy template(s) from container and continue gracefully if not found
+ID=$(docker run -d $IMAGE /bin/sh)
+docker cp $ID:/app/nginx.once.tpl $TMP_PATH 2> /dev/null || true
+docker cp $ID:/app/nginx.ssl.tpl $TMP_PATH 2> /dev/null || true
+docker cp $ID:/app/nginx.tpl $TMP_PATH 2> /dev/null || true
+docker rm -f $ID
 
 # Get list of VHOST domains. This will be overridden below if SSL for some
 # domains are enabled. If VHOST does not exist, set to empty string.
@@ -27,10 +40,10 @@ source $APP_PATH/ENV || true
 # Remove old nginx.conf if exists
 rm -f $APP_PATH/nginx.conf #need -f to supress error if non-existent file
 
-# Add once-off configuration options.  
+# Add once-off configuration options.
 echo '-----> Configuring once-off options...'
 NGINX_ONCE_CONF="$DIR/nginx.once.conf"
-APP_NGINX_ONCE_TEMPLATE="$APP_PATH/nginx.once.tpl"
+APP_NGINX_ONCE_TEMPLATE="$TMP_PATH/nginx.once.tpl"
 if [[ -e $APP_NGINX_ONCE_TEMPLATE ]]; then
   echo '-----> Overriding default nginx.once.conf with detected nginx.once.tpl'
   NGINX_ONCE_CONF=$APP_NGINX_ONCE_TEMPLATE
@@ -51,7 +64,7 @@ if [[ -e "$SSL_PATH/server.crt" ]] && [[ -e "$SSL_PATH/server.key" ]]; then
   # Ability to override default configuration files
   # (If a nginx.ssl.tpl file exists in the $APP_PATH directory, use that
   # instead.)
-  APP_NGINX_SSL_TEMPLATE="$APP_PATH/nginx.ssl.tpl"
+  APP_NGINX_SSL_TEMPLATE="$TMP_PATH/nginx.ssl.tpl"
   if [[ -e $APP_NGINX_SSL_TEMPLATE ]]; then
     echo '-----> Overriding default SSL nginx.conf with detected nginx.ssl.tpl'
     NGINX_CONF=$APP_NGINX_SSL_TEMPLATE
@@ -64,7 +77,7 @@ if [[ -e "$SSL_PATH/server.crt" ]] && [[ -e "$SSL_PATH/server.key" ]]; then
   SSL_HOSTNAME=`openssl x509 -in $SSL_PATH/server.crt -noout -subject | tr '/' '\n' | grep CN= | cut -c4-`
   SSL_HOSTNAME=`echo "$SSL_HOSTNAME" | sed 's|\.|\\.|g' | sed 's/\*/\.\*/g'`
 
-  # Only set up SSL for VHOST domains that the SSL certificate apply to. 
+  # Only set up SSL for VHOST domains that the SSL certificate apply to.
   # (If the SSL certificate is a wildcard subdomain, any VHOST domain that
   # satisfies the wildcard is included.)
   # grep -v flag means inverse
@@ -94,7 +107,7 @@ NGINX_CONF="$DIR/nginx.conf" # default non-SSL conf file
 
 # Ability to override default configuration files
 # (If a nginx.tpl file exists in the $APP_PATH directory, use that instead.)
-APP_NGINX_TEMPLATE="$APP_PATH/nginx.tpl"
+APP_NGINX_TEMPLATE="$TMP_PATH/nginx.tpl"
 if [[ -e $APP_NGINX_TEMPLATE ]]; then
   echo '-----> Overriding default nginx.conf with detected nginx.tpl'
   NGINX_CONF=$APP_NGINX_TEMPLATE
@@ -111,7 +124,7 @@ echo $NONSSL_VHOSTS | xargs -i \
 SERVER_NAME=`echo $NONSSL_VHOSTS | tr '\n' ' ' | xargs`
 cat $NGINX_CONF | process_template >> $APP_PATH/nginx.conf
 
-# CRUDE HACK: Since the `URL` file only expects one app url, we take the 
+# CRUDE HACK: Since the `URL` file only expects one app url, we take the
 # first  `$NONSSL_VHOSTS` domain and write it to `URL`.
 echo "http://$(echo $NONSSL_VHOSTS | head -n1)" > "$DOKKU_ROOT/$APP/URL"
 
