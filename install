@@ -5,6 +5,9 @@
 # 2. A `cat` is added to the end so that install output can be piped to user.
 set -eo pipefail; [[ $DOKKU_TRACE ]] && set -x
 
+# wipe conflicting vhost plugin
+[[ -d $PLUGIN_PATH/nginx-vhosts ]] && rm -rf $PLUGIN_PATH/nginx-vhosts
+
 NGINX=$( which nginx )
 # nginx -v outputs to stderr. have to redirect to awk it
 [[ -n $NGINX ]] && NGINX_VERSION=$( `which nginx` -v 2>&1 | awk -F 'nginx/' '{ print $2 }' )
