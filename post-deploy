@@ -132,4 +132,5 @@ pluginhook nginx-pre-reload $APP
 echo '-----> Reloading nginx...'
 sudo /etc/init.d/nginx reload > /dev/null
 
+rm -rf $TMP_PATH # cleanup
 cat #prints output from any plugins chained to this
