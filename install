@@ -5,8 +5,11 @@
 # 2. A `cat` is added to the end so that install output can be piped to user.
 set -eo pipefail; [[ $DOKKU_TRACE ]] && set -x
 
-# Rename existing nginx-vhosts plugin
-[[ -d $PLUGIN_PATH/nginx-vhosts ]] && mv $PLUGIN_PATH/nginx-vhosts $PLUGIN_PATH/.nginx-vhosts
+# Rename existing nginx-vhosts plugin.
+if [[ -d $PLUGIN_PATH/nginx-vhosts ]]; then
+  rm -rf $PLUGIN_PATH/.nginx-vhosts
+  mv $PLUGIN_PATH/nginx-vhosts $PLUGIN_PATH/.nginx-vhosts
+fi
 
 # latest stable NGINX 1.4.x with websocket support
 add-apt-repository -y ppa:nginx/stable
