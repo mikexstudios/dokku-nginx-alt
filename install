@@ -8,9 +8,9 @@ set -eo pipefail; [[ $DOKKU_TRACE ]] && set -x
 # wipe conflicting vhost plugin
 [[ -d $PLUGIN_PATH/nginx-vhosts ]] && mv $PLUGIN_PATH/nginx-vhosts $PLUGIN_PATH/.nginx-vhosts
 
-NGINX=$( which nginx )
+NGINX=$( which nginx || true )
 # nginx -v outputs to stderr. have to redirect to awk it
-[[ -n $NGINX ]] && NGINX_VERSION=$( `which nginx` -v 2>&1 | awk -F 'nginx/' '{ print $2 }' )
+[[ -n $NGINX ]] && NGINX_VERSION=$( $NGINX -v 2>&1 | awk -F 'nginx/' '{ print $2 }' )
 
 # only install nginx if our version is less that 1.4.0. NGINX_VERSION might be undefined. and that's ok
 if [ "$( printf '1.4.0\n${NGINX_VERSION}' | sort -V | tail -1 )" = "1.4.0" ]; then
