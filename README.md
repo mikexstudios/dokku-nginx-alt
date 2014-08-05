@@ -17,7 +17,7 @@ In more detail:
   `nginx.conf` and `nginx.ssl.conf`.
 - Ability to override default .conf files with user's own nginx configuration
   files placed in `/home/dokku/$APP/`.
-- Ability to deploy an app under multiple custom domains. The `VHOST` file can 
+- Ability to deploy an app under multiple custom domains. The `VHOST` file can
   now contain a list of domains that nginx will serve to.
 - `VHOST` file is decoupled from `post-deploy` in that `post-deploy` no longer
   overwrites `VHOST` after each deploy. Custom domains are set independently
@@ -37,21 +37,16 @@ Installation and Usage
 
 This plugin has been tested on dokku version 0.2.3.
 
-1. Remove the default `nginx-vhosts` plugin:
-   ```sh
-   rm -rf /var/lib/dokku/plugins/nginx-vhosts
-   ```
-   
-2. Install the plugin by cloning into the dokku plugins directory:
+1. Install the plugin by cloning into the dokku plugins directory:
     ```sh
     git clone https://github.com/mikexstudios/dokku-nginx-alt.git /var/lib/dokku/plugins/nginx-alt
     ```
 
-4. Create a `VHOST` file in your dokku app directory 
-   (e.g. `/home/dokku/[app name]/VHOST`) and add each domain name on a separate 
+2. Create a `VHOST` file in your dokku app directory
+   (e.g. `/home/dokku/[app name]/VHOST`) and add each domain name on a separate
    line.
 
-5. To override the default `nginx.conf` and/or `nginx.ssl.conf` templates, place 
+3. To override the default `nginx.conf` and/or `nginx.ssl.conf` templates, place
    copies renamed as `nginx.tpl` and/or `nginx.ssl.tpl` in your
    `/home/dokku/[app name]/` directory. When you re-push your application, you should see
    a message like:
@@ -60,8 +55,9 @@ This plugin has been tested on dokku version 0.2.3.
    -----> Overriding default SSL nginx.conf with detected nginx.tpl...
    ```
 
-6. Re-push your app.
+4. Re-push your app.
 
+NOTE: Installation of this plugin is meant to replace the functionality of the default `nginx-vhosts` plugin. To avoid conflicts, the install script will `mv $PLUGIN_PATH/nginx-vhosts $PLUGIN_PATH/.nginx-vhosts`
 
 Known Issues
 ------------

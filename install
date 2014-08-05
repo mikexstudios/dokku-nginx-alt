@@ -6,7 +6,7 @@
 set -eo pipefail; [[ $DOKKU_TRACE ]] && set -x
 
 # wipe conflicting vhost plugin
-[[ -d $PLUGIN_PATH/nginx-vhosts ]] && rm -rf $PLUGIN_PATH/nginx-vhosts
+[[ -d $PLUGIN_PATH/nginx-vhosts ]] && mv $PLUGIN_PATH/nginx-vhosts $PLUGIN_PATH/.nginx-vhosts
 
 NGINX=$( which nginx )
 # nginx -v outputs to stderr. have to redirect to awk it
