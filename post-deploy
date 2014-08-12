@@ -119,7 +119,8 @@ fi
 # first  `$NONSSL_VHOSTS` domain and write it to `URL`.
 echo "http://$(echo $NONSSL_VHOSTS | head -n1)" > "$DOKKU_ROOT/$APP/URL"
 
-pluginhook nginx-pre-reload $APP
+echo "-----> Running nginx-pre-reload"
+pluginhook nginx-pre-reload $APP $PORT
 echo '-----> Reloading nginx...'
 sudo /etc/init.d/nginx reload > /dev/null
 
