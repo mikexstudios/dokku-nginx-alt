@@ -16,6 +16,19 @@ VHOST_PATH="$APP_PATH/VHOST"
 WILDCARD_SSL_PATH="$DOKKU_ROOT/tls"
 APP_SSL_PATH="$APP_PATH/tls"
 
+# Create VHOST if it does not exist. Use default dokku nginx-vhost plugin
+# way to determine the host name for this app
+if [[ ! -f "$VHOST_PATH" ]]; then
+  VHOST=$(< "$DOKKU_ROOT/VHOST")
+  SUBDOMAIN=${APP/%\.${VHOST}/}
+  if [[ "$APP" == *.* ]] && [[ "$SUBDOMAIN" == "$APP" ]]; then
+    hostname="${APP/\//-}"
+  else
+    hostname="${APP/\//-}.$VHOST"
+  fi
+  echo "$hostname" > "$VHOST_PATH"
+fi 
+
 # Get list of VHOST domains. This will be overridden below if SSL for some
 # domains are enabled. If VHOST does not exist, set to empty string.
 NONSSL_VHOSTS=`cat $VHOST_PATH 2>&- || echo ''`
