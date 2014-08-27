@@ -41,12 +41,20 @@ This plugin has been tested on dokku version 0.2.3.
     ```sh
     git clone https://github.com/mikexstudios/dokku-nginx-alt.git /var/lib/dokku/plugins/nginx-alt
     ```
+   Do not delete the existing `nginx-vhosts/` plugin that ships with dokku.
 
-2. Create a `VHOST` file in your dokku app directory
+2. Then run dokku's plugin install:
+    ```sh
+    dokku plugins-install
+    ```
+   This step renames `nginx-vhosts/` to `.nginx-vhosts/` and calls 
+   `.nginx-vhosts/install`.
+   
+3. Create a `VHOST` file in your dokku app directory
    (e.g. `/home/dokku/[app name]/VHOST`) and add each domain name on a separate
    line.
 
-3. To override the default `nginx.conf` and/or `nginx.ssl.conf` templates, place
+4. To override the default `nginx.conf` and/or `nginx.ssl.conf` templates, place
    copies renamed as `nginx.tpl` and/or `nginx.ssl.tpl` in your
    `/home/dokku/[app name]/` directory. When you re-push your application, you should see
    a message like:
@@ -55,9 +63,8 @@ This plugin has been tested on dokku version 0.2.3.
    -----> Overriding default SSL nginx.conf with detected nginx.tpl...
    ```
 
-4. Re-push your app.
+5. Re-push your app.
 
-NOTE: Installation of this plugin is meant to replace the functionality of the default `nginx-vhosts` plugin. To avoid conflicts, the install script will `mv $PLUGIN_PATH/nginx-vhosts $PLUGIN_PATH/.nginx-vhosts`
 
 Known Issues
 ------------
