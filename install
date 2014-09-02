@@ -1,51 +1,21 @@
 #!/usr/bin/env bash
-# This file is almost exactly the same as dokku's original nginx-vhosts/install
-# file with two changes:
-# 1. `$DOKKU_ROOT/VHOST` file is not generated here.
-# 2. A `cat` is added to the end so that install output can be piped to user.
 set -eo pipefail; [[ $DOKKU_TRACE ]] && set -x
 
-# wipe conflicting vhost plugin
-[[ -d $PLUGIN_PATH/nginx-vhosts ]] && (rm -rf $PLUGIN_PATH/.nginx-vhosts; mv $PLUGIN_PATH/nginx-vhosts $PLUGIN_PATH/.nginx-vhosts)
+OLD_PLUGIN_PATH="$PLUGIN_PATH/nginx-vhosts"
+OLD_PLUGIN_PATH_HIDDEN="$PLUGIN_PATH/.nginx-vhosts"
 
-NGINX=$( which nginx || true )
-# nginx -v outputs to stderr. have to redirect to awk it
-[[ -n $NGINX ]] && NGINX_VERSION=$( $NGINX -v 2>&1 | awk -F 'nginx/' '{ print $2 }' )
-
-# only install nginx if our version is less that 1.4.0. NGINX_VERSION might be undefined. and that's ok
-if [ "$( printf '1.4.0\n${NGINX_VERSION}' | sort -V | tail -1 )" = "1.4.0" ]; then
-    # latest stable NGINX 1.4.x with websocket support
-    add-apt-repository -y ppa:nginx/stable
-    apt-get update
-    apt-get install -y nginx dnsutils
+# Rename existing nginx-vhosts plugin.
+if [[ -d $OLD_PLUGIN_PATH ]]; then
+  rm -rf $OLD_PLUGIN_PATH_HIDDEN
+  mv $OLD_PLUGIN_PATH $OLD_PLUGIN_PATH_HIDDEN
 fi
 
-if ! grep -q dokku-nginx-reload "/etc/sudoers"; then
-  touch /etc/sudoers.tmp
-  cp /etc/sudoers /tmp/sudoers.new
-  echo "%dokku ALL=(ALL)NOPASSWD:/etc/init.d/nginx reload # dokku-nginx-reload" >> /tmp/sudoers.new
-  EDITOR="cp /tmp/sudoers.new" visudo
-  rm /tmp/sudoers.new
+# Make sure existing nginx-vhosts plugin exists
+if [[ ! -d $OLD_PLUGIN_PATH_HIDDEN ]]; then
+  echo 'ERROR: $OLD_PLUGIN_PATH_HIDDEN is required for running install.'
 fi
 
-# if dokku.conf has not been created, create it
-if [[ ! -f /etc/nginx/conf.d/dokku.conf ]]; then
-  cat<<EOF > /etc/nginx/conf.d/dokku.conf
-include $DOKKU_ROOT/*/nginx.conf;
-
-ssl_session_cache shared:SSL:20m;
-ssl_session_timeout 10m;
-
-ssl_ciphers EECDH+AES128:RSA+AES128:EECDH+AES256:RSA+AES256:EECDH+3DES:RSA+3DES:!MD5;
-ssl_protocols TLSv1.2 TLSv1.1 TLSv1;
-ssl_prefer_server_ciphers on;
-
-#ssl_certificate $DOKKU_ROOT/tls/server.crt;
-#ssl_certificate_key $DOKKU_ROOT/tls/server.key;
-EOF
-fi
-sed -i 's/# server_names_hash_bucket_size/server_names_hash_bucket_size/' /etc/nginx/nginx.conf
-
-/etc/init.d/nginx restart # start errors if nginx is already running. still safe if its not running yet
+# Use the existing nginx-vhosts install file
+source "$OLD_PLUGIN_PATH_HIDDEN/install"
 
 cat #prints output from any plugins chained to this
