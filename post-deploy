@@ -16,6 +16,9 @@ VHOST_PATH="$APP_PATH/VHOST"
 WILDCARD_SSL_PATH="$DOKKU_ROOT/tls"
 APP_SSL_PATH="$APP_PATH/tls"
 
+# use app VHOST if it exists. otherwise use dokku's vhost
+[[ -e $APP_PATH/VHOST ]] && VHOST_PATH="$APP_PATH/VHOST" || VHOST_PATH="$DOKKU_ROOT/VHOST"
+
 # Get list of VHOST domains. This will be overridden below if SSL for some
 # domains are enabled. If VHOST does not exist, set to empty string.
 NONSSL_VHOSTS=`cat $VHOST_PATH 2>&- || echo ''`
