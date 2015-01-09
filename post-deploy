@@ -9,12 +9,19 @@ shopt -s expand_aliases
 alias process_template="perl -p -e 's/\\$\{([^}]+)\}/defined \$ENV{\$1} ? \$ENV{\$1} : \$&/eg'"
 
 echo "-----> Deploying nginx..."
-APP="$1"; PORT="$2"
+APP="$1"; DOKKU_APP_LISTEN_PORT="$2"; DOKKU_APP_LISTEN_IP="$3"
 DIR="$( cd "$( dirname "${BASH_SOURCE[0]}" )" && pwd )" #this directory
 APP_PATH="$DOKKU_ROOT/$APP"
 VHOST_PATH="$APP_PATH/VHOST"
 WILDCARD_SSL_PATH="$DOKKU_ROOT/tls"
 APP_SSL_PATH="$APP_PATH/tls"
+
+if [[ -z "$DOKKU_APP_LISTEN_PORT" ]] && [[ -f "$DOKKU_ROOT/$APP/PORT" ]]; then
+  DOKKU_APP_LISTEN_PORT=$(< "$DOKKU_ROOT/$APP/PORT")
+fi
+if [[ -z "$DOKKU_APP_LISTEN_IP" ]] && [[ -f "$DOKKU_ROOT/$APP/IP" ]]; then
+  DOKKU_APP_LISTEN_IP=$(< "$DOKKU_ROOT/$APP/IP")
+fi
 
 # use app VHOST if it exists. otherwise use dokku's vhost
 [[ -e $APP_PATH/VHOST ]] && VHOST_PATH="$APP_PATH/VHOST" || VHOST_PATH="$DOKKU_ROOT/VHOST"
@@ -123,7 +130,7 @@ fi
 echo "http://$(echo $NONSSL_VHOSTS | head -n1)" > "$DOKKU_ROOT/$APP/URL"
 
 echo "-----> Running nginx-pre-reload"
-pluginhook nginx-pre-reload $APP $PORT
+pluginhook nginx-pre-reload $APP $DOKKU_APP_LISTEN_PORT $DOKKU_APP_LISTEN_IP
 echo '-----> Reloading nginx...'
 sudo /etc/init.d/nginx reload > /dev/null
 
