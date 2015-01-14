@@ -62,8 +62,9 @@ if [[ -e "$SSL_PATH/server.crt" ]] && [[ -e "$SSL_PATH/server.key" ]]; then
   # e.g. mydomain.com -> mydomain\.com
   #      *.mydomain.com -> .*\.mydomain\.com
   SSL_HOSTNAME=`openssl x509 -in $SSL_PATH/server.crt -noout -subject | tr '/' '\n' | grep CN= | cut -c4-`
-  SSL_HOSTNAME_ALT=`openssl x509 -in $SSL_PATH/server.crt -noout -text | grep --after-context=1 '509v3 Subject Alternative Name:' | tail -n 1 | sed -e "s/[[:space:]]*DNS://g"  | tr ',' '\n'`
-  SSL_HOSTNAME=`echo "$SSL_HOSTNAME $SSL_HOSTNAME_ALT" | tr ' ', '\n' | sort | uniq`
+  if [[ SSL_HOSTNAME_ALT=`openssl x509 -in $SSL_PATH/server.crt -noout -text | grep --after-context=1 '509v3 Subject Alternative Name:' | tail -n 1 | sed -e "s/[[:space:]]*DNS://g"  | tr ',' '\n'` ]]; then
+    SSL_HOSTNAME=`echo "$SSL_HOSTNAME $SSL_HOSTNAME_ALT" | tr ' ', '\n' | sort | uniq`
+  fi
   SSL_HOSTNAME=`echo "$SSL_HOSTNAME" | sed 's|\.|\\.|g' | sed 's/\*/\.\*/g'`
 
   # Only set up SSL for VHOST domains that the SSL certificate apply to. 
