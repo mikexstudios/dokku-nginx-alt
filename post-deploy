@@ -9,7 +9,7 @@ shopt -s expand_aliases
 alias process_template="perl -p -e 's/\\$\{([^}]+)\}/defined \$ENV{\$1} ? \$ENV{\$1} : \$&/eg'"
 
 echo "-----> Deploying nginx..."
-APP="$1"; PORT="$2"
+APP="$1"; PORT="$2"; IP="$3"
 DIR="$( cd "$( dirname "${BASH_SOURCE[0]}" )" && pwd )" #this directory
 APP_PATH="$DOKKU_ROOT/$APP"
 VHOST_PATH="$APP_PATH/VHOST"
