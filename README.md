@@ -47,9 +47,9 @@ This plugin has been tested on dokku version 0.2.3.
     ```sh
     dokku plugins-install
     ```
-   This step renames `nginx-vhosts/` to `.nginx-vhosts/` and calls 
+   This step renames `nginx-vhosts/` to `.nginx-vhosts/` and calls
    `.nginx-vhosts/install`.
-   
+
 3. Create a `VHOST` file in your dokku app directory
    (e.g. `/home/dokku/[app name]/VHOST`) and add each domain name on a separate
    line.
